@@ -2,11 +2,9 @@ import logging
 from asyncio import Queue
 from typing import Callable
 
-from crawler.ICrawler import ICrawler
-from crawler.ACMCrawler import ACMCrawler
-from datastore.IDatabaseClient import IDatabaseClient
-from model.ConferenceSource import ConferenceSource
-from model.Source import Source
+from crawler import ICrawler, ACMCrawler
+from datastore import IDatabaseClient
+from datastore.model import ConferenceSource, Source
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +15,6 @@ crawler_names = {
 
 class CrawlerFactory:
     crawlers: dict[str, ICrawler] = {}
-    callback: Callable = None
 
     def __init__(self, data_client: IDatabaseClient, queue: Queue):
         self.data_client = data_client
@@ -27,7 +24,7 @@ class CrawlerFactory:
         # add crawler info to db if not exist
         sources = await self.data_client.finds('Source', name=name)
         if len(sources) == 0:
-            source = Source('', name, '')
+            source = Source('', '', '', name, '')
             record_id = await self.data_client.insert_source(source)
             source.id = record_id
         else:
@@ -35,13 +32,7 @@ class CrawlerFactory:
 
         self.crawlers[name] = crawler_names[name](source.id, source.cache)
 
-    async def crawl(self, callback):
-        if isinstance(callback, Callable):
-            self.callback = callback
-            for name in self.crawlers.keys():
-                await callback(name)
-
-    async def process_list(self, crawler_name):
+    async def process_list(self, crawler_name, callback):
         try:
             conferences = await self.crawlers[crawler_name].get_list()
             logger.info(f'Fetched {len(conferences)} conference(s) from {crawler_name}')
@@ -52,8 +43,8 @@ class CrawlerFactory:
         except:
             logger.exception(f'Got exception from crawler: {crawler_name} list')
 
-        if self.callback is not None:
-            await self.callback(crawler_name)
+        if isinstance(callback, Callable):
+            await callback(crawler_name)
 
     async def process_detail(self, crawler_name, data):
         try:

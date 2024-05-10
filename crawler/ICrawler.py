@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from datastore.IDatabaseClient import IDatabaseClient
-from model.Conference import Conference
+from datastore import IDatabaseClient
+from datastore.model import Conference
 
 
 class ICrawler(ABC):

@@ -1,27 +1,16 @@
 import sqlite3
 
-from datastore.IDatabaseClient import IDatabaseClient
-from datastore.IDatastore import IDatastore
-from model.Conference import Conference
-from model.table import tables
+from .IDatastore import IDatastore
+from .model import tables
 
 
-class SQLiteClient(IDatastore, IDatabaseClient):
+class SQLite(IDatastore):
     def __init__(self):
         self.connection = None
 
     async def connect(self, **kwargs):
         self.connection = sqlite3.connect(kwargs['database'])
         self.connection.row_factory = sqlite3.Row
-        if not (await self.__is_init()):
-            await self.__create_database()
-
-    async def close(self):
-        if self.is_connected():
-            self.connection.close()
-
-    def is_connected(self):
-        return self.connection is not None
 
     async def execute_query(self, query):
         if not self.is_connected():
@@ -30,6 +19,25 @@ class SQLiteClient(IDatastore, IDatabaseClient):
         cursor = self.connection.cursor()
         cursor.execute(query)
         return cursor
+
+    async def close(self):
+        if self.is_connected():
+            self.connection.close()
+
+    def is_connected(self):
+        return self.connection is not None
+
+
+class ConferenceDBClient(SQLite):
+    def __init__(self):
+        super().__init__()
+        self.connection = None
+
+    async def connect(self, **kwargs):
+        self.connection = sqlite3.connect(kwargs['database'])
+        self.connection.row_factory = sqlite3.Row
+        if not (await self.__is_init()):
+            await self.__create_database()
 
     async def __is_init(self):
         cursor = await self.execute_query(
@@ -44,10 +52,12 @@ class SQLiteClient(IDatastore, IDatabaseClient):
         # Create Conference table
         await self.execute_query('''CREATE TABLE Conference (
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                                     name TEXT,
                                     location TEXT,
-                                    start_date TEXT,
-                                    end_date TEXT,
+                                    start_date DATETIME,
+                                    end_date DATETIME,
                                     website TEXT,
                                     description TEXT
                                 )''')
@@ -61,6 +71,8 @@ class SQLiteClient(IDatastore, IDatabaseClient):
         # Create Source table
         await self.execute_query('''CREATE TABLE Source (
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                                     name TEXT,
                                     cache TEXT
                                 )''')

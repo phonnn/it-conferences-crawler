@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from CrawlerFactory import CrawlerFactory
-from datastore.SQLite import SQLiteClient
+from datastore import ConferenceDBClient
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ async def run_list(factory: CrawlerFactory, queue):
 
         key = package.get('key', '')
         if key != '':
-            await factory.process_list(key)
+            await factory.process_list(key, callback=lambda _name: queue.put({'key': _name}))
 
 
 async def run_details(factory: CrawlerFactory, queue):
@@ -38,7 +38,7 @@ async def main():
             'ACM',
         ]
 
-        data_client = SQLiteClient()
+        data_client = ConferenceDBClient()
         await data_client.connect(database='conferencesDB.db')
 
         list_queue = asyncio.Queue()
@@ -51,7 +51,7 @@ async def main():
 
         for name in crawler_name:
             await factory.add_crawler(name)
-            await factory.crawl(callback=lambda _name: list_queue.put({'key': _name}))
+            await list_queue.put({'key': name})
 
         await list_task
         await detail_task

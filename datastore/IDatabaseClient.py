@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 
-from model.Conference import Conference
-from model.ConferenceSource import ConferenceSource
-from model.Source import Source
+from .IDatastore import IDatastore
+from .model import Conference, ConferenceSource, Source
 
 
-class IDatabaseClient(ABC):
+class IDatabaseClient(IDatastore):
     @abstractmethod
     async def finds(self, table_name, **criteria):
         """
@@ -58,4 +57,3 @@ class IDatabaseClient(ABC):
         :return: ID of the inserted ConferenceSource
         """
         pass
-

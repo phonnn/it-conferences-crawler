@@ -3,8 +3,8 @@ from asyncio import sleep
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-from crawler.ICrawler import ICrawler
-from model.Conference import Conference
+from .ICrawler import ICrawler
+from datastore.model import Conference
 from utils import fetch, safe_int
 
 logger = logging.getLogger(__name__)
@@ -69,7 +69,8 @@ class ACMCrawler(ICrawler):
         await db_client.update('Source', self._id, **update_data)
         self._current_run += 1
 
-    def __parse_dates(self, date_string):
+    @staticmethod
+    def __parse_dates(date_string):
         if not isinstance(date_string, str):
             raise TypeError(f'Expecting a string but getting an {type(date_string)}')
 
@@ -109,7 +110,8 @@ class ACMCrawler(ICrawler):
 
         return conferences
 
-    def __extract_details(self, data):
+    @staticmethod
+    def __extract_details(data):
         if not isinstance(data, dict):
             raise TypeError(f'Expecting a dict but getting an {type(data)}')
 
@@ -118,6 +120,6 @@ class ACMCrawler(ICrawler):
         location = data.get('location', '')
         start_date = data.get('start_date', '')
         end_date = data.get('end_date', '')
-        conference = Conference('', name, location, start_date, end_date, website)
+        conference = Conference('', '', '', name, location, start_date, end_date, website)
 
         return conference
