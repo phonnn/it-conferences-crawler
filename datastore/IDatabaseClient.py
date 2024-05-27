@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from .IDatastore import IDatastore
-from .model import Conference, ConferenceSource, Source
+from .model import Conference, Source, Topic, ConferenceTopic
 
 
 class IDatabaseClient(IDatastore):
@@ -49,11 +49,21 @@ class IDatabaseClient(IDatastore):
         pass
 
     @abstractmethod
-    async def insert_conference_source(self, data: ConferenceSource):
+    async def insert_topic(self, data: Topic):
         """
-        Insert a new ConferenceSource record into the database.
+        Insert a new Topic record into the database.
 
-        :param data: Data of the ConferenceSource to insert
-        :return: ID of the inserted ConferenceSource
+        :param data: Data of the Topic to insert
+        :return: ID of the inserted Topic
+        """
+        pass
+
+    @abstractmethod
+    async def insert_conference_topic(self, data: ConferenceTopic):
+        """
+        Insert a new ConferenceTopic record into the database.
+
+        :param data: Data of the ConferenceTopic to insert
+        :return: ID of the inserted ConferenceTopic
         """
         pass

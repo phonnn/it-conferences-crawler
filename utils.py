@@ -1,9 +1,9 @@
 import aiohttp
 
 
-async def fetch(url, headers=None):
+async def fetch(url, headers=None, params=None):
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as response:
+        async with session.get(url, headers=headers, params=params) as response:
             if response.status == 200:
                 content_type = response.headers.get('Content-Type', '').lower()
                 if 'application/json' in content_type:

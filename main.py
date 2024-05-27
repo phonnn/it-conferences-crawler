@@ -35,7 +35,7 @@ async def main():
     try:
         logger.info("Starting the application")
         crawler_name = [
-            'ACM',
+            'ACM', 'CI'
         ]
 
         data_client = ConferenceDBClient()
@@ -62,4 +62,3 @@ async def main():
 if __name__ == '__main__':
     # Run the main coroutine
     asyncio.run(main())
-    # pass

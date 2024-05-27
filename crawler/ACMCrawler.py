@@ -35,6 +35,9 @@ class ACMCrawler(ICrawler):
     def get_id(self):
         return self._id
 
+    def get_cache(self):
+        return self._current_run
+
     async def get_list(self):
         await sleep(5)  # show some mercy
         logger.info(f'Try to get list data from {self._url}')
@@ -46,28 +49,18 @@ class ACMCrawler(ICrawler):
         return conferences[self._current_run:]
 
     async def get_details(self, data):
-        conference = self.__extract_details(data)
-        logger.info(f'Try to save {conference.name} - current run: {self._current_run}')
-        return conference
-
-    async def check_duplicate(self, data, db_client):
         if not isinstance(data, dict):
             raise TypeError(f'Expecting a dict but getting an {type(data)}')
 
+        name = data.get('name', '')
         website = data.get('website', '')
-        if website == '':
-            raise ValueError(f'Expecting a string but getting empty')
+        location = data.get('location', '')
+        start_date = data.get('start_date', '')
+        end_date = data.get('end_date', '')
+        conference = Conference('', '', '', name, location, start_date, end_date, website)
 
-        duplicates = await db_client.finds('Conference', website=website)
-        if len(duplicates) > 0:
-            return True
-
-        return False
-
-    async def save_cache(self, db_client):
-        update_data = {'cache': self._current_run}
-        await db_client.update('Source', self._id, **update_data)
         self._current_run += 1
+        return {'conference': conference, 'topics': []}
 
     @staticmethod
     def __parse_dates(date_string):
@@ -87,9 +80,9 @@ class ACMCrawler(ICrawler):
 
         return start_date, end_date
 
-    def __extract_list(self, html_text):
+    def __extract_list(self, data):
         conferences = []
-        soup = BeautifulSoup(html_text, 'html.parser')
+        soup = BeautifulSoup(data, 'html.parser')
         conference_elements = soup.find_all('li', class_='hidden')
         for element in conference_elements:
             name = element.find('a').text.strip()
@@ -109,17 +102,3 @@ class ACMCrawler(ICrawler):
             })
 
         return conferences
-
-    @staticmethod
-    def __extract_details(data):
-        if not isinstance(data, dict):
-            raise TypeError(f'Expecting a dict but getting an {type(data)}')
-
-        name = data.get('name', '')
-        website = data.get('website', '')
-        location = data.get('location', '')
-        start_date = data.get('start_date', '')
-        end_date = data.get('end_date', '')
-        conference = Conference('', '', '', name, location, start_date, end_date, website)
-
-        return conference

@@ -42,7 +42,7 @@ class ConferenceDBClient(SQLite):
     async def __is_init(self):
         cursor = await self.execute_query(
             "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('Conference', 'Topic', 'Source', "
-            "'ConferenceTopic', 'ConferenceSource')"
+            "'ConferenceTopic')"
         )
 
         existing_tables = cursor.fetchall()
@@ -54,7 +54,7 @@ class ConferenceDBClient(SQLite):
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                                     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                                     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                    name TEXT,
+                                    name TEXT NOT NULL,
                                     location TEXT,
                                     start_date DATETIME,
                                     end_date DATETIME,
@@ -65,7 +65,7 @@ class ConferenceDBClient(SQLite):
         # Create Topic table
         await self.execute_query('''CREATE TABLE Topic (
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                    name TEXT
+                                    name TEXT NOT NULL UNIQUE
                                 )''')
 
         # Create Source table
@@ -73,7 +73,7 @@ class ConferenceDBClient(SQLite):
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                                     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                                     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                    name TEXT,
+                                    name TEXT NOT NULL UNIQUE,
                                     cache TEXT
                                 )''')
 
@@ -84,16 +84,6 @@ class ConferenceDBClient(SQLite):
                                     FOREIGN KEY (conference_id) REFERENCES Conference(id) ON DELETE CASCADE,
                                     FOREIGN KEY (topic_id) REFERENCES Topic(id) ON DELETE CASCADE,
                                     PRIMARY KEY (conference_id, topic_id)
-                                )''')
-
-        # Create ConferenceSource table
-        await self.execute_query('''CREATE TABLE ConferenceSource (
-                                    source_url TEXT,
-                                    source_id INTEGER,
-                                    conference_id INTEGER,
-                                    FOREIGN KEY (source_id) REFERENCES Source(id) ON DELETE CASCADE,
-                                    FOREIGN KEY (conference_id) REFERENCES Conference(id) ON DELETE CASCADE,
-                                    PRIMARY KEY (source_url)
                                 )''')
 
         # Commit the changes
@@ -160,16 +150,31 @@ class ConferenceDBClient(SQLite):
         self.connection.commit()
         return cursor.lastrowid
 
-    async def insert_conference_source(self, data):
-        source_url = data.source_url
-        source_id = data.source_id
-        conference_id = data.conference_id
-
+    async def insert_topic(self, data):
         query = (
-            f'INSERT INTO ConferenceSource(source_url, source_id, conference_id) '
-            f'VALUES ("{source_url}", "{source_id}", "{conference_id}")'
+            f'INSERT INTO Topic(name) '
+            f'VALUES ("{data.name}")'
+        )
+        try:
+            cursor = await self.execute_query(query)
+            self.connection.commit()
+            return cursor.lastrowid
+
+        except sqlite3.IntegrityError:
+            rows = await self.finds("Topic", name=data.name)
+            return rows[0].id
+
+    async def insert_conference_topic(self, data):
+        query = (
+            f'INSERT INTO ConferenceTopic(topic_id, conference_id) '
+            f'VALUES ({data.topic_id}, {data.conference_id})'
         )
 
-        cursor = await self.execute_query(query)
-        self.connection.commit()
-        return cursor.lastrowid
+        try:
+            cursor = await self.execute_query(query)
+            self.connection.commit()
+            return cursor.lastrowid
+
+        except sqlite3.IntegrityError:
+            rows = await self.finds("ConferenceTopic", topic_id=data.topic_id, conference_id=data.conference_id)
+            return rows[0].id
