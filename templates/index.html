@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conference Search</title>
+    <style>
+        /* Add your CSS styles here */
+        /* This is just a basic example */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .conference {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        .conference h3 {
+            margin-top: 0;
+        }
+        .topics {
+            margin-top: 5px;
+        }
+        .topic-list {
+            display: none;
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .topic-list li {
+            margin-bottom: 5px;
+        }
+        .show-topics {
+            cursor: pointer;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1>Conference Search</h1>
+    <form action="/" method="GET">
+        <label for="keyword">Keyword:</label>
+        <input type="text" id="keyword" name="keyword" value="{{ request.args.get('keyword', '') }}">
+        <button type="submit">Search</button>
+    </form>
+    <hr>
+    <!-- Conference Data -->
+    {% for conference in conferences.items %}
+        <div class="conference">
+            <h3>{{ conference.name }}</h3>
+            <p><strong>Location:</strong> {{ conference.location }}</p>
+            <p><strong>Start Date:</strong> {{ conference.start_date }}</p>
+            <p><strong>End Date:</strong> {{ conference.end_date }}</p>
+            <p><strong>Website:</strong> <a href="{{ conference.website }}" target="_blank">{{ conference.website }}</a></p>
+            {% if conference.description %}
+                <p><strong>Description:</strong> {{ conference.description }}</p>
+            {% endif %}
+            <div class="topics">
+                <strong>Topics:</strong>
+                <ul class="topic-list">
+                    {% for topic in conference.topics %}
+                        <li>{{ topic.name }}</li>
+                    {% endfor %}
+                </ul>
+                <span class="show-topics" onclick="toggleTopics(this)">Show Topics</span>
+            </div>
+        </div>
+    {% endfor %}
+
+    <!-- Pagination Controls -->
+    <div class="pagination">
+        {% if conferences.has_prev %}
+            <a href="?page={{ conferences.prev_num }}&keyword={{ request.args.get('keyword', '') }}">Previous</a>
+        {% endif %}
+        {% if conferences.has_next %}
+            <a href="?page={{ conferences.next_num }}&keyword={{ request.args.get('keyword', '') }}">Next</a>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleTopics(element) {
+            var topicList = element.previousElementSibling;
+            if (topicList.style.display === "none" || topicList.style.display === "") {
+                topicList.style.display = "block";
+                element.textContent = "Hide Topics";
+            } else {
+                topicList.style.display = "none";
+                element.textContent = "Show Topics";
+            }
+        }
+    </script>
+</body>
+</html>
