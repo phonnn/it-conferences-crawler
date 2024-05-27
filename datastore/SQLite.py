@@ -1,6 +1,7 @@
 import sqlite3
 
 from .IDatastore import IDatastore
+from .IDatabaseClient import IDatabaseClient
 from .model import tables
 
 
@@ -28,10 +29,9 @@ class SQLite(IDatastore):
         return self.connection is not None
 
 
-class ConferenceDBClient(SQLite):
+class ConferenceDBClient(SQLite, IDatabaseClient):
     def __init__(self):
         super().__init__()
-        self.connection = None
 
     async def connect(self, **kwargs):
         self.connection = sqlite3.connect(kwargs['database'])
@@ -46,7 +46,7 @@ class ConferenceDBClient(SQLite):
         )
 
         existing_tables = cursor.fetchall()
-        return False if len(existing_tables) < 5 else True
+        return False if len(existing_tables) < 4 else True
 
     async def __create_database(self):
         # Create Conference table

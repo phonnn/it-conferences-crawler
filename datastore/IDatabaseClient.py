@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
-
-from .IDatastore import IDatastore
 from .model import Conference, Source, Topic, ConferenceTopic
 
 
-class IDatabaseClient(IDatastore):
+class IDatabaseClient(ABC):
     @abstractmethod
     async def finds(self, table_name, **criteria):
         """

@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 from .ICrawler import ICrawler
 from datastore.model import Conference, Topic
-from utils import fetch, safe_int
+from .utils import fetch, safe_int
 
 logger = logging.getLogger(__name__)
 
