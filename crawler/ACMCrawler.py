@@ -85,6 +85,9 @@ class ACMCrawler(ICrawler):
         soup = BeautifulSoup(data, 'html.parser')
         conference_elements = soup.find_all('li', class_='hidden')
         for element in conference_elements:
+            if element.find('a') is None:
+                continue
+
             name = element.find('a').text.strip()
             website = element.find('a')['href']
             location = element.find('p').text.strip()
